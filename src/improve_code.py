@@ -13,7 +13,7 @@ def completion_with_backoff(**kwargs):
 
 def correct_code(
     chunks: str
-) -> list:
+) -> str:
     """
     It takes a chunk of code as text and returns the corrected code
     :param chunks: the text to be corrected
