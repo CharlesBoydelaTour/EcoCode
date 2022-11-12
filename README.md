@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # EcoCode
 
 This proof of concept that GPT-3 can improve code efficiency and reduce code emissions.
@@ -16,6 +17,8 @@ This proof of concept that GPT-3 can improve code efficiency and reduce code emi
 
 ### Getting started
 =======
+=======
+>>>>>>> a7a5441f350fd40ddf3770708d0ad97756249b34
 eco_code
 ==============================
 
@@ -73,4 +76,7 @@ Project Organization
 --------
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+<<<<<<< HEAD
 >>>>>>> a7a5441 (cookiecutter template)
+=======
+>>>>>>> a7a5441f350fd40ddf3770708d0ad97756249b34
