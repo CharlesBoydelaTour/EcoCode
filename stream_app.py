@@ -10,12 +10,17 @@ from datetime import datetime
 from transformers import GPT2TokenizerFast
 #from streamlit_webrtc import WebRtcMode
 
+from src.utils_app import get_sim_data, request_data
+
 
 # OpenAI creds:
 k = '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'
 openai.organization = "org-0hLSeCcoBZl9cuiCloL2uPRC"
 openai.api_key = k
 COMPLETIONS_MODEL = "text-davinci-002"
+headers = {
+    "X-BLOBR-KEY": "JBWNZtcWJDPl0GmgCtTLDgQJoHb6rNeE"
+}
 
 COMMENT_TEMPLATE_MD = """{} - {}
 > {}"""
@@ -68,42 +73,40 @@ def main_page():
         text = get_gpt_answer(formated_prompt)
         st.write(text)
 
-def request_page():
-    st.header("Request to Electricity Maps")
-    zone = st.text_input("zone")
+def request_page(sim=False):
+    st.header("GPT-3 + Electricity Maps")
+    st.write("Carbon Intensity Forecast for next 24hrs")
+    #zone = st.text_input("zone")
     url = "https://api-access.electricitymaps.com/tw0j3yl62nfpdjv4/carbon-intensity/forecast?zone="
-    headers = {
-      "X-BLOBR-KEY": "xeQEO59SITDrUW8DQJrskr3dWngPG8di"
-    }
-
-    #response = requests.get(url, headers=headers)
-    #data = json.loads(response.text)
-    f = open('sim_data.json')
-    data = json.load(f)
-    f.close()
-    forecast_df = pd.DataFrame(data['forecast'])[:24]
-    forecast_df['datetime'] = pd.to_datetime(forecast_df['datetime'])
-    forecast_df['date'] = forecast_df['datetime'].dt.date
-    forecast_df['hour'] = forecast_df['datetime'].dt.hour
-    forecast_df['price'] = np.random.randint(150,270, len(forecast_df))
-    str_data = forecast_df[['carbonIntensity', 'hour', 'date', 'price']].to_string(index=False)
+    live_data = st.checkbox('Use Live Data')
+    if not live_data:
+        forecast_df = get_sim_data()
+    else:
+        forecast_df = request_data(url, headers)
+    str_data = forecast_df[['carbonIntensity', 'hour', 'date', 'price','Dollar per carbon']].to_string(index=False)
     st.write("**Forecast per hour of region**")
     st.dataframe(forecast_df)
-    df_plot = forecast_df[['datetime','carbonIntensity','price']].set_index('datetime').copy()
+    df_plot = forecast_df[['datetime','carbonIntensity','price', 'Dollar per carbon']].set_index('datetime').copy()
+    # Plot the figure
+    #st.pyplot(fig)
     st.line_chart(df_plot)
     FORECAST_PROMPT = """
-    Answer the following as truthfully as possible, if you do not know the answer say "I dont know".
-    Consider the following forecast:
-    {data_string}
-    ---
-    What is the best time to run a python script for approx 30 minutes?
-    Consider the carbon intensity and the lowest price, provide an explanation and reference the price and carbon intensity.
-    Explain step by step.
+Answer the following as truthfully as possible. 
+If you are un
+
+Consider the following forecast:
+{data_string}
+---
+1.Summarize the data
+2.Recommend a time with lowest price and carbon to run a script for an hour.
+
 
     """.format(data_string=str_data)
     temp = st.number_input('Temperature of answer')
     n_char = st.number_input('Length of answer', 100)
     if st.button('Get recommendation'):
+        print(FORECAST_PROMPT)
+        #st.write("temp {}, n_char {}".format(temp, n_char))
         text = get_gpt_answer(FORECAST_PROMPT, temp, int(n_char))
         print(text)
         st.write(text)
@@ -112,19 +115,65 @@ def request_page():
 def get_gpt_answer(prompt, temperature=0.0, max_tokens=300):
     return openai.Completion.create(
     prompt=prompt,
-    temperature=0.2,
+    temperature=temperature,
     max_tokens=max_tokens,
     top_p=1,
     frequency_penalty=0,
     presence_penalty=0,
     model=COMPLETIONS_MODEL)["choices"][0]["text"].strip(" \n")
 
+def suggest_based_on_current():
+    st.header("Suggestion of Timing for Current Jobs ")
+    live_url = "https://api-access.electricitymaps.com/tw0j3yl62nfpdjv4/carbon-intensity/latest?zone=DK-DK2"
+    #response = requests.get(url, headers=headers)
+    #latest_data = json.loads(response.text)
+    carbonIntensity = 344#latest_data['carbonIntensity']
+    st.write("Current carbon Intensity: {}".format(carbonIntensity))
+
+    str_datetime = '2022-11-13T16:00:00.000Z'#str(latest_data['datetime'])
+
+    forecast_url = "https://api-access.electricitymaps.com/tw0j3yl62nfpdjv4/carbon-intensity/forecast?zone=DK-DK2"
+    forecast_df = request_data(forecast_url, headers)
+    forecast_df['pct_diff'] = carbonIntensity/forecast_df['carbonIntensity']
+    
+    str_data = forecast_df[['carbonIntensity', 'hour', 'date', 'price', 'Dollar per carbon']][:24].to_string(index=False)
+    str1 = """The forecast for the next hours is in the following table:
+{fore_data}
+------
+The carbon intensity given in gCO2eq/kWh.
+
+
+At {time}, We have been running a python script for half hour
+with a carbon intensity of {carbonIntensity}.
+1. Summarize the data.
+2. Based on price and pct_diff suggest the best time to run the same job.
+Reference the relevant data for the suggestion. Remmember we want low carbon emissions.
+3. How much emissions would we have reduced if we ran it then?
+
+Lets take this step by step.
+""".format(time=str_datetime, carbonIntensity=carbonIntensity, fore_data=str_data)
+    st.title("Current Status")
+    st.write("""At {time}, We have been running a python script for half hour with a carbon intensity of {carbonIntensity}.
+1. What would be the best time to run our script again with the lowest carbonIntesity? Reference the carbonIntensity.
+2. How much emissions would we have reduced if we ran it then? Use the pct_diff column
+Recommendation:
+            """.format(time=str_datetime,carbonIntensity=carbonIntensity))
+    temp = st.number_input('Temperature of answer')
+    n_char = st.number_input('Length of answer', 100)
+    if st.button('Get recommendation'):
+        print(str1)
+        text = get_gpt_answer(str1, temp, int(n_char))
+        print(text)
+        st.write(text)          
+
+
 def main():
     
     page_names_to_funcs = {
     "Main Page": main_page,
     "Ask a question": question_page,
-    "Request ": request_page
+    "Request ": request_page,
+    "Current and Forecast": suggest_based_on_current
     }
     selected_page = st.sidebar.selectbox("Select a page", page_names_to_funcs.keys())
     page_names_to_funcs[selected_page]()
