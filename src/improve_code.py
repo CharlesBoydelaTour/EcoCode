@@ -22,8 +22,9 @@ def correct_code(
     """
     correction = completion_with_backoff(
         model="text-davinci-002",
-        prompt=f'Rewrite the code in excerpt to make it more efficient.'
-        f"\n###\nExcerpt:```{chunks}```\n###\n Corrected code:",
+        prompt=f'Rewrite entirely the code in excerpt to make it more efficient.'
+        f"\n###\nExcerpt:```{chunks}```\n###\n Corrected code:\n"
+        f"\n```\n",
         temperature=0,
         max_tokens=200,
         top_p=1,
@@ -38,28 +39,26 @@ def select_code_from_output(output:str):
     corrected_code_str = ""
     to_select = False
     for line in output.splitlines():
-        if line =="```":
-            to_select = True
-            continue
-        if to_select:
-            corrected_code_str += line + '\n'
-    #if empty then return original code
-    if corrected_code_str == "":
-        return output
+        corrected_code_str += line + '\n'
+    #remove ``` from string 
+    corrected_code_str = corrected_code_str.replace("```", "")
     return corrected_code_str
 
 if __name__ == "__main__":
     code_to_correct = """
-    def is_pair(n): \n
+    def is_pair(n): 
         #this function returns true if n is a pair number and false if it is odd \n
-        if n == 2:  \n
-            return True \n
-        elif n == 4: \n
-            return True \n
-        elif n == 6: \n
-            return True \n
-        else : \n
-            return False \n
+        if n == 2:  
+            return True 
+        elif n == 4: 
+            return True 
+        elif n == 6: 
+            return True 
+        else : 
+            return False 
+    
+    for i in range(100000):
+        is_pair(i)
     """
     corrected_code = correct_code(code_to_correct)
     corrected_code_str = select_code_from_output(corrected_code)
