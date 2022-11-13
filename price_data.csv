@@ -1,0 +1,6 @@
+a1.medium	$0.0255	1	2 GiB	EBS Only	Up to 10 Gigabit US East (N. Virginia)
+a1.medium	$0.0255	1	2 GiB	EBS Only	Up to 10 Gigabit US East (Ohio)
+t2.medium	$0.0552	2	4 GiB	EBS Only	Low to Moderate US West (N. California)
+t2.medium	$0.0464	2	4 GiB	EBS Only	Low to Moderate US West (Oregon)
+t2.medium	$0.0512	2	4 GiB	EBS Only	Low to Moderate Canada (Central)
+t3.medium	$0.0488	2	4 GiB	EBS Only	Up to 5 Gigabit AWS Gov Cloud (US-east)
