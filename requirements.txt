@@ -4,6 +4,7 @@
 # external requirements
 openai
 codecarbon
+streamlit
 
 click
 Sphinx

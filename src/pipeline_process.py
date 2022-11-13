@@ -1,5 +1,8 @@
-from analysis_carbon import carbon_tracker
-import improve_code
+import sys
+sys.path.append('./')
+
+from src.analysis_carbon import carbon_tracker
+import src.improve_code as improve_code
 import os 
 import pandas as pd
 
