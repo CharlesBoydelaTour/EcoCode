@@ -210,7 +210,7 @@ def main():
     page_names_to_funcs = {
     "Main Page": main_page,
     "Ask a question": question_page,
-    "Request ": request_page,
+    "GPT-3 + Electricity Maps API ": request_page,
     "Current and Forecast": suggest_based_on_current,
     "Code Recommendation": code_reco
     }
