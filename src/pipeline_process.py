@@ -16,7 +16,7 @@ def run_file_code(file_path:str):
         code = f.read()
     exec(code)
 
-def process(code:str, country='FRA'):
+def process(code_to_correct:str, country='FRA'):
     #if it exists, supress emissions.csv
     try:
         os.remove("emissions.csv")
